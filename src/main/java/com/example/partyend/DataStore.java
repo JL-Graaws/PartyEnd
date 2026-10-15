@@ -27,6 +27,19 @@ final class DataStore {
 
     void setCleared(UUID id) { yml.set("cleared." + id, true); save(); }
 
+    // --- where players were last standing (so a restart can put them back) ---
+    UUID inInstance(UUID player) {
+        String s = yml.getString("inInstance." + player);
+        if (s == null) return null;
+        try { return UUID.fromString(s); } catch (IllegalArgumentException e) { return null; }
+    }
+
+    void setInInstance(UUID player, UUID host) { yml.set("inInstance." + player, host.toString()); save(); }
+
+    void clearInInstance(UUID player) {
+        if (yml.contains("inInstance." + player)) { yml.set("inInstance." + player, null); save(); }
+    }
+
     // --- instances ---
     boolean hasInstance(UUID host) { return yml.contains("instances." + host); }
 

@@ -1,11 +1,13 @@
 package com.example.partyend;
 
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
@@ -68,6 +70,21 @@ final class EndListener implements Listener {
         p.teleportAsync(instances.entryLocation(w));
     }
 
+    /** Remember which instance a player is in, so a server restart can put them back. */
+    @EventHandler
+    public void onWorldChange(PlayerChangedWorldEvent e) {
+        Player p = e.getPlayer();
+        World now = p.getWorld();
+        if (instances.isInstance(now)) {
+            try {
+                data.setInInstance(p.getUniqueId(),
+                        UUID.fromString(now.getName().substring(InstanceManager.PREFIX.length())));
+            } catch (IllegalArgumentException ignored) { }
+        } else {
+            data.clearInInstance(p.getUniqueId());
+        }
+    }
+
     /** Mark everyone in the instance as cleared. Stored per player, so resets never bring the fight back. */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent e) {
@@ -83,7 +100,30 @@ final class EndListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
-        instances.ejectIfInvalid(p.getUniqueId()); // parties reset on restart
-        instances.warnIfExpiring(p, parties.hostOf(p.getUniqueId()));
+        UUID id = p.getUniqueId();
+        UUID saved = data.inInstance(id);
+
+        // After a restart the instance isn't loaded, so the server dropped them into the overworld.
+        if (saved != null && !instances.isInstance(p.getWorld())) {
+            if (saved.equals(parties.hostOf(id))) {
+                World w = instances.getOrCreate(saved);
+                if (w != null) {
+                    Location l = p.getLocation();
+                    p.teleportAsync(new Location(w, l.getX(), l.getY(), l.getZ(), l.getYaw(), l.getPitch()));
+                } else {
+                    data.clearInInstance(id);
+                    p.teleportAsync(instances.exitLocation(p));
+                    p.sendMessage("The End is busy right now, so you were moved to safety.");
+                }
+            } else {
+                // Parties reset on restart, so they no longer belong to that host's End.
+                data.clearInInstance(id);
+                p.teleportAsync(instances.exitLocation(p));
+                p.sendMessage("Your party was reset by the restart, so you were moved out of that End.");
+            }
+        }
+
+        instances.ejectIfInvalid(id);
+        instances.warnIfExpiring(p, parties.hostOf(id));
     }
 }
