@@ -1,0 +1,18 @@
+# ISO-8601 instant, e.g. 2026-11-01T18:00:00Z. Empty = End is open now.
+open-at: ""
+
+# Seed used for NEW instances only. Existing instances keep the seed they were made with.
+seed: 20261015
+
+# Radius (blocks) of each instance's world border
+border-radius: 1500
+
+# Days after last activity before an instance is deleted
+retention-days: 14
+# Shorter timeout once every member of the host's party has killed the dragon
+cleared-retention-days: 7
+# Warn players on login when their End will be deleted within this many days
+warn-days: 3
+
+# Cap on simultaneously loaded instances (world creation is main-thread work)
+max-loaded-instances: 10

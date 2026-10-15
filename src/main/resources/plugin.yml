@@ -1,0 +1,14 @@
+name: PartyEnd
+main: com.example.partyend.PartyEndPlugin
+version: 1.0.0
+api-version: '26.2'
+description: Per-party instanced End dimensions
+commands:
+  endparty:
+    description: Manage your End party
+    usage: /endparty <invite|accept|leave|kick|info> [player]
+    aliases: [ep]
+permissions:
+  partyend.bypass:
+    description: Enter the End before the opening date
+    default: op

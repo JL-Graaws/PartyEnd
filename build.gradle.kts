@@ -1,0 +1,10 @@
+plugins { java }
+
+repositories { maven("https://repo.papermc.io/repository/maven-public/") }
+
+dependencies {
+    // Set this to the exact Paper API version you run (check papermc.io/downloads)
+    compileOnly("io.papermc.paper:paper-api:26.2-R0.1-SNAPSHOT")
+}
+
+java { toolchain.languageVersion.set(JavaLanguageVersion.of(25)) } // match what Paper 26.2 requires
