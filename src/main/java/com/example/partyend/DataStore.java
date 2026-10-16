@@ -62,6 +62,8 @@ final class DataStore {
 
     void clearSuppress(UUID host) { yml.set("instances." + host + ".suppress", null); save(); }
 
+    long created(UUID host) { return yml.getLong("instances." + host + ".created"); }
+
     long seed(UUID host) { return yml.getLong("instances." + host + ".seed"); }
 
     long lastActive(UUID host) { return yml.getLong("instances." + host + ".lastActive"); }

@@ -70,6 +70,7 @@ final class InstanceManager {
                 try {
                     w.getChunkAt(0, 0).load(true); // the portal sits at the world origin
                     battle.generateEndPortal(true);
+                    placeGateway(w);
                 } catch (Exception ex) {
                     plugin.getLogger().warning("Could not pre-generate the exit portal: " + ex.getMessage());
                 }
@@ -78,6 +79,32 @@ final class InstanceManager {
         }
         data.touch(host);
         return w;
+    }
+
+    /**
+     * Copies the gateway a vanilla first dragon kill creates: a bedrock cross with an END_GATEWAY block at
+     * its centre, at y=75 on a radius-96 ring. The gateway finds its outer-island exit on first use.
+     */
+    private void placeGateway(World w) {
+        int k = java.util.concurrent.ThreadLocalRandom.current().nextInt(20);
+        double a = 2 * (-Math.PI + (Math.PI / 20) * k);
+        int cx = (int) Math.floor(96 * Math.cos(a));
+        int cz = (int) Math.floor(96 * Math.sin(a));
+        int cy = 75;
+        w.getChunkAt(cx >> 4, cz >> 4).load(true);
+        for (int x = -1; x <= 1; x++)
+            for (int y = -2; y <= 2; y++)
+                for (int z = -1; z <= 1; z++) {
+                    boolean ax = x == 0, ay = y == 0, az = z == 0, edge = Math.abs(y) == 2;
+                    Material m;
+                    if (ax && ay && az) m = Material.END_GATEWAY;
+                    else if (ay) m = Material.AIR;
+                    else if (edge && ax && az) m = Material.BEDROCK;
+                    else if ((ax || az) && !edge) m = Material.BEDROCK;
+                    else m = Material.AIR;
+                    w.getBlockAt(cx + x, cy + y, cz + z).setType(m, false);
+                }
+        plugin.getLogger().info("Placed gateway for " + w.getName() + " at " + cx + ", " + cy + ", " + cz);
     }
 
     /** Vanilla-style obsidian platform at 100,48,0, rebuilt if missing. */
@@ -141,6 +168,10 @@ final class InstanceManager {
             // Instance made for an already-cleared host: kill the first dragon that appears. Killing it
             // through the normal path finishes the fight (exit portal, gateways) and stops it respawning.
             if (data.suppress(host)) {
+                if (System.currentTimeMillis() - data.created(host) > 5 * 60 * 1000L) {
+                    data.clearSuppress(host); // no dragon showed up; stop watching so crystal respawns are safe
+                    continue;
+                }
                 boolean killed = false;
                 for (EnderDragon d : w.getEntitiesByClass(EnderDragon.class)) {
                     if (d.getHealth() > 0) { d.setHealth(0); killed = true; }
