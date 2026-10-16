@@ -6,7 +6,7 @@ description: Per-party instanced End dimensions
 commands:
   endparty:
     description: Manage your End party
-    usage: /endparty <invite|accept|leave|kick|info> [player]
+    usage: /endparty <invite|accept|leave|kick|info|exit> [player]
     aliases: [ep]
 permissions:
   partyend.bypass:

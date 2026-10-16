@@ -14,7 +14,7 @@ public final class PartyEndPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new EndListener(this, data, parties, instances), this);
 
-        PartyCommand cmd = new PartyCommand(parties, instances);
+        PartyCommand cmd = new PartyCommand(parties, instances, data);
         PluginCommand pc = getCommand("endparty");
         if (pc != null) {
             pc.setExecutor(cmd);

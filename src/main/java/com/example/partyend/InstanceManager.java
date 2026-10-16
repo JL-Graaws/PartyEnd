@@ -63,7 +63,17 @@ final class InstanceManager {
         // Core rule: the HOST's record decides whether this End has a dragon fight.
         if (fresh && data.hasCleared(host)) {
             DragonBattle battle = w.getEnderDragonBattle();
-            if (battle != null) { battle.setPreviouslyKilled(true); data.setNoFight(host); }
+            if (battle != null) {
+                battle.setPreviouslyKilled(true);
+                data.setNoFight(host);
+                // Don't make players wait for the dragon to spawn and die: build the exit portal now.
+                try {
+                    w.getChunkAt(0, 0).load(true); // the portal sits at the world origin
+                    battle.generateEndPortal(true);
+                } catch (Exception ex) {
+                    plugin.getLogger().warning("Could not pre-generate the exit portal: " + ex.getMessage());
+                }
+            }
             data.setSuppress(host);
         }
         data.touch(host);

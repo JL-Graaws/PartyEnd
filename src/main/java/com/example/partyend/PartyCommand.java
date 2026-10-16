@@ -9,21 +9,22 @@ import org.bukkit.entity.Player;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 final class PartyCommand implements TabExecutor {
     private final PartyManager parties;
     private final InstanceManager instances;
+    private final DataStore data;
 
-    PartyCommand(PartyManager parties, InstanceManager instances) {
+    PartyCommand(PartyManager parties, InstanceManager instances, DataStore data) {
         this.parties = parties;
         this.instances = instances;
+        this.data = data;
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player p)) { sender.sendMessage("Players only."); return true; }
-        if (args.length == 0) { p.sendMessage("Usage: /endparty <invite|accept|leave|kick|info> [player]"); return true; }
+        if (args.length == 0) { p.sendMessage("Usage: /endparty <invite|accept|leave|kick|info|exit> [player]"); return true; }
         UUID me = p.getUniqueId();
 
         switch (args[0].toLowerCase()) {
@@ -58,14 +59,24 @@ final class PartyCommand implements TabExecutor {
             }
             case "info" -> {
                 UUID host = parties.hostOf(me);
-                String names = parties.membersOf(host).stream()
-                        .map(u -> String.valueOf(Bukkit.getOfflinePlayer(u).getName()))
-                        .collect(Collectors.joining(", "));
-                p.sendMessage("Host: " + Bukkit.getOfflinePlayer(host).getName() + " | Members: " + names);
+                p.sendMessage("Host: " + describe(host));
+                for (UUID m : parties.membersOf(host)) {
+                    if (!m.equals(host)) p.sendMessage("Member: " + describe(m));
+                }
             }
-            default -> p.sendMessage("Usage: /endparty <invite|accept|leave|kick|info> [player]");
+            case "exit" -> {
+                if (!instances.isInstance(p.getWorld())) { p.sendMessage("You aren't in an End instance."); return true; }
+                p.teleportAsync(instances.exitLocation(p));
+                p.sendMessage("Moved out of the End.");
+            }
+            default -> p.sendMessage("Usage: /endparty <invite|accept|leave|kick|info|exit> [player]");
         }
         return true;
+    }
+
+    private String describe(UUID id) {
+        return Bukkit.getOfflinePlayer(id).getName() + " - "
+                + (data.hasCleared(id) ? "has cleared the dragon" : "has NOT cleared the dragon");
     }
 
     private Player target(Player p, String[] args) {
@@ -77,7 +88,7 @@ final class PartyCommand implements TabExecutor {
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {
-        if (a.length == 1) return List.of("invite", "accept", "leave", "kick", "info");
+        if (a.length == 1) return List.of("invite", "accept", "leave", "kick", "info", "exit");
         if (a.length == 2 && (a[0].equalsIgnoreCase("invite") || a[0].equalsIgnoreCase("kick")))
             return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         return List.of();
