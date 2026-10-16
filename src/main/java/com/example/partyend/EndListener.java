@@ -91,10 +91,9 @@ final class EndListener implements Listener {
         if (!(e.getEntity() instanceof EnderDragon)) return;
         World w = e.getEntity().getWorld();
         if (!instances.isInstance(w)) return;
-        for (Player p : w.getPlayers()) {
-            data.setCleared(p.getUniqueId());
-            p.sendMessage("You've defeated the Ender Dragon!");
-        }
+        UUID host = instances.hostOfWorld(w);
+        if (host != null && data.suppress(host)) return; // the plugin's own cleanup kill, not a player clear
+        instances.markCleared(w);
     }
 
     @EventHandler

@@ -50,6 +50,18 @@ final class DataStore {
         save();
     }
 
+    /** True once an instance has no live dragon fight (created dragonless, or the dragon was killed). */
+    boolean noFight(UUID host) { return yml.getBoolean("instances." + host + ".noFight", false); }
+
+    void setNoFight(UUID host) { yml.set("instances." + host + ".noFight", true); save(); }
+
+    /** Set on instances created for an already-cleared host: the first dragon that spawns is killed off. */
+    boolean suppress(UUID host) { return yml.getBoolean("instances." + host + ".suppress", false); }
+
+    void setSuppress(UUID host) { yml.set("instances." + host + ".suppress", true); save(); }
+
+    void clearSuppress(UUID host) { yml.set("instances." + host + ".suppress", null); save(); }
+
     long seed(UUID host) { return yml.getLong("instances." + host + ".seed"); }
 
     long lastActive(UUID host) { return yml.getLong("instances." + host + ".lastActive"); }

@@ -21,6 +21,9 @@ public final class PartyEndPlugin extends JavaPlugin {
             pc.setTabCompleter(cmd);
         }
 
+        // detect dragon kills that skip the death event (e.g. /kill), every second
+        getServer().getScheduler().runTaskTimer(this, instances::checkClears, 20L, 20L);
+
         // first run after 1 minute, then every 10 minutes
         getServer().getScheduler().runTaskTimer(this, instances::cleanup, 20L * 60, 20L * 60 * 10);
     }

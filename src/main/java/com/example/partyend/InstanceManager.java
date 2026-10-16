@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
+import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.boss.DragonBattle;
 
@@ -62,7 +63,8 @@ final class InstanceManager {
         // Core rule: the HOST's record decides whether this End has a dragon fight.
         if (fresh && data.hasCleared(host)) {
             DragonBattle battle = w.getEnderDragonBattle();
-            if (battle != null) battle.setPreviouslyKilled(true);
+            if (battle != null) { battle.setPreviouslyKilled(true); data.setNoFight(host); }
+            data.setSuppress(host);
         }
         data.touch(host);
         return w;
@@ -95,6 +97,51 @@ final class InstanceManager {
         if (here.startsWith(PREFIX) && !here.equals(worldName(parties.hostOf(id)))) {
             p.teleportAsync(exitLocation(p));
             p.sendMessage("You're no longer part of that End, so you were moved out.");
+        }
+    }
+
+    // ---- clear detection ----
+
+    UUID hostOfWorld(World w) {
+        if (!isInstance(w)) return null;
+        try { return UUID.fromString(w.getName().substring(PREFIX.length())); }
+        catch (IllegalArgumentException e) { return null; }
+    }
+
+    /** Marks everyone currently in the instance as having beaten the dragon. */
+    void markCleared(World w) {
+        for (Player p : w.getPlayers()) {
+            data.setCleared(p.getUniqueId());
+            p.sendMessage("You've defeated the Ender Dragon!");
+        }
+        UUID host = hostOfWorld(w);
+        if (host != null) data.setNoFight(host);
+    }
+
+    /**
+     * Scheduled task. The death event is skipped when a dragon is removed with /kill, so also watch the
+     * battle's "previously killed" flag, which is set either way.
+     */
+    void checkClears() {
+        for (World w : Bukkit.getWorlds()) {
+            if (!isInstance(w) || w.getPlayers().isEmpty()) continue;
+            UUID host = hostOfWorld(w);
+            if (host == null) continue;
+
+            // Instance made for an already-cleared host: kill the first dragon that appears. Killing it
+            // through the normal path finishes the fight (exit portal, gateways) and stops it respawning.
+            if (data.suppress(host)) {
+                boolean killed = false;
+                for (EnderDragon d : w.getEntitiesByClass(EnderDragon.class)) {
+                    if (d.getHealth() > 0) { d.setHealth(0); killed = true; }
+                }
+                if (killed) data.clearSuppress(host); // later dragons (end crystals) are left alone
+                continue;
+            }
+
+            if (data.noFight(host)) continue;
+            DragonBattle battle = w.getEnderDragonBattle();
+            if (battle != null && battle.hasBeenPreviouslyKilled()) markCleared(w);
         }
     }
 
