@@ -108,10 +108,14 @@ You can also build with GitHub Actions: add a workflow that sets up Java, runs `
 
 ## Contributing
 
-Issues and pull requests are welcome. When reporting a bug, include your Paper version, Geyser/Floodgate versions if used, and the relevant console output.
+Issues and pull requests are welcome. By contributing, you agree that your contribution is licensed under the GPL-3.0-or-later, like the rest of the project. When reporting a bug, include your Paper version, Geyser/Floodgate versions if used, and the relevant console output.
 
 ## License
 
-MIT. See [LICENSE](LICENSE). Replace the copyright holder's name in that file with your own before publishing.
+PartyEnd is free software, licensed under the **GNU General Public License v3.0 or later** (GPL-3.0-or-later). See [LICENSE](LICENSE) for the full text.
+
+In short: you can run, study, modify and share it. If you distribute a modified version, you must make its source available under the same licence. Running it or modifying it for your own server without distributing it carries no such obligation.
+
+Copyright (C) 2026 PartyEnd Contributors.
 
 Not affiliated with or endorsed by Mojang or PaperMC.
