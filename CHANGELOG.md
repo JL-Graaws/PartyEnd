@@ -25,4 +25,4 @@ First public release. Early and lightly tested; try it on a copy of your server 
 - Leaving through the exit portal, post-restart restoring and gateway placement have had limited testing.
 - Paper 26.2 only; built against `paper-api:26.2.build.121-stable`.
 
-[0.1.0]: https://github.com/joshliddle03-glitch/EndPlugin/releases/tag/v0.1.0
+[0.1.0]: https://github.com/joshliddle03-glitch/PartyEnd/releases/tag/v0.1.0
