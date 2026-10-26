@@ -14,5 +14,8 @@ cleared-retention-days: 7
 # Warn players on login when their End will be deleted within this many days
 warn-days: 3
 
+# Difficulty of each End: inherit (copy the main overworld), peaceful, easy, normal or hard
+difficulty: inherit
+
 # Cap on simultaneously loaded instances (world creation is main-thread work)
 max-loaded-instances: 10

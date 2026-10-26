@@ -19,6 +19,7 @@
 package com.example.partyend;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -60,6 +61,19 @@ final class InstanceManager {
         return n;
     }
 
+    /** "inherit" copies the main world; otherwise peaceful, easy, normal or hard. */
+    private Difficulty configuredDifficulty() {
+        Difficulty main = Bukkit.getWorlds().get(0).getDifficulty();
+        String d = plugin.getConfig().getString("difficulty", "inherit");
+        if (d == null || d.equalsIgnoreCase("inherit")) return main;
+        try {
+            return Difficulty.valueOf(d.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            plugin.getLogger().warning("Invalid difficulty '" + d + "' in config; using the main world's.");
+            return main;
+        }
+    }
+
     /** Main thread only. Returns null if the server is at its instance cap or creation failed. */
     World getOrCreate(UUID host) {
         String name = worldName(host);
@@ -75,6 +89,8 @@ final class InstanceManager {
         w = new WorldCreator(name).environment(World.Environment.THE_END).seed(seed).createWorld();
         if (w == null) return null;
 
+        // New worlds don't reliably inherit the server's difficulty, so copy the main world's explicitly.
+        w.setDifficulty(configuredDifficulty());
         w.getWorldBorder().setCenter(0, 0);
         w.getWorldBorder().setSize(plugin.getConfig().getInt("border-radius", 1500) * 2.0);
 

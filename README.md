@@ -65,6 +65,7 @@ Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
 | `retention-days` | `14` | Days of inactivity before an End is deleted. |
 | `cleared-retention-days` | `7` | Same, once every member of the host's party has cleared. |
 | `warn-days` | `3` | Warn players on login when their End will be deleted within this many days. |
+| `difficulty` | `inherit` | Difficulty of each End: `inherit` copies the main overworld, or set `peaceful`, `easy`, `normal` or `hard`. |
 | `max-loaded-instances` | `10` | Cap on Ends loaded at once. World creation is main-thread work. |
 
 ## How it works

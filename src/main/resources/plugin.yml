@@ -1,6 +1,6 @@
 name: PartyEnd
 main: com.example.partyend.PartyEndPlugin
-version: 0.1.0
+version: 0.1.1
 api-version: '26.2'
 description: Per-party instanced End dimensions
 commands:

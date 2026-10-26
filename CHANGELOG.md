@@ -2,6 +2,20 @@
 
 All notable changes to PartyEnd are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project uses [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-10-26
+
+### Added
+- `difficulty` config option: `inherit` (default, copies the main overworld) or `peaceful`, `easy`, `normal`, `hard`.
+
+### Fixed
+- End instances did not reliably follow the server's difficulty, so mobs could spawn at the wrong difficulty in a player's End. The difficulty is now set explicitly whenever an instance is created or loaded.
+
+### Build
+- The Gradle project name is pinned, so the jar is always named `PartyEnd-<version>.jar`.
+
+### Upgrading from 0.1.0
+Replace the jar and restart. Your existing `config.yml` is not updated automatically: add `difficulty: inherit` (or your chosen value) to it. Without the line the plugin behaves as `inherit`.
+
 ## [0.1.0] - 2026-10-17
 
 First public release. Early and lightly tested; try it on a copy of your server first.
@@ -25,4 +39,5 @@ First public release. Early and lightly tested; try it on a copy of your server 
 - Leaving through the exit portal, post-restart restoring and gateway placement have had limited testing.
 - Paper 26.2 only; built against `paper-api:26.2.build.121-stable`.
 
-[0.1.0]: https://github.com/JL-Graaws/PartyEnd/releases/tag/v0.1.0
+[0.1.1]: https://github.com/OWNER/REPO/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/OWNER/REPO/releases/tag/v0.1.0
