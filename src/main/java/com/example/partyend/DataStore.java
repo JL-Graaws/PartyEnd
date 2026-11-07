@@ -23,7 +23,11 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,6 +42,31 @@ final class DataStore {
         plugin.getDataFolder().mkdirs();
         this.file = new File(plugin.getDataFolder(), "data.yml");
         this.yml = YamlConfiguration.loadConfiguration(file);
+    }
+
+    // --- parties (saved so a restart keeps them) ---
+    Map<UUID, List<UUID>> loadParties() {
+        Map<UUID, List<UUID>> out = new LinkedHashMap<>();
+        ConfigurationSection s = yml.getConfigurationSection("parties");
+        if (s == null) return out;
+        for (String k : s.getKeys(false)) {
+            try {
+                List<UUID> list = new ArrayList<>();
+                for (String m : s.getStringList(k)) list.add(UUID.fromString(m));
+                out.put(UUID.fromString(k), list);
+            } catch (IllegalArgumentException ignored) { }
+        }
+        return out;
+    }
+
+    void saveParties(Map<UUID, Set<UUID>> parties) {
+        yml.set("parties", null);
+        for (Map.Entry<UUID, Set<UUID>> e : parties.entrySet()) {
+            List<String> ids = new ArrayList<>();
+            for (UUID m : e.getValue()) ids.add(m.toString());
+            yml.set("parties." + e.getKey(), ids);
+        }
+        save();
     }
 
     // --- players ---

@@ -10,11 +10,17 @@ Parties now survive restarts, the dragon scales with party size, and config chan
 - **`/endparty reload`.** Admins (permission `partyend.admin`, ops by default) can re-read `config.yml` without restarting. It also reports whether the End is currently open.
 - **Friendlier `open-at`.** Empty, `none` or `now` all mean "open", an unquoted time works, and a bad value now logs a clear message about the expected format instead of silently keeping the End closed.
 
+### Fixes and tighter access
+- **Vehicle bypass fixed.** Players riding a boat, minecart or other vehicle could enter an End portal without the plugin noticing, skipping the opening date and landing in the old shared End. Riders now go through the normal entry flow.
+- **Only the host's party can enter a host's End.** `/tp`, `/tpa` and similar teleports into someone else's End are refused, and the old shared End is closed to non-admins. Anyone found in the old End when they join is moved out. Players with `partyend.admin` (ops by default) are exempt.
+- **Fairer dragon credit.** Killing the dragon now marks only the host's party members as cleared, not everyone who happens to be standing in the End.
+
 ### Upgrading from 0.1.1
 1. Stop the server, replace the old jar in `plugins/` with `PartyEnd-0.2.0.jar`, and start it again.
 2. Parties from before this restart are lost one last time, since older versions never saved them. Players can re-form them with `/endparty invite` and `/endparty accept`, and they persist from now on.
 3. Optional: add the new dragon-scaling lines to your existing `config.yml`. If you don't, the defaults are used and scaling is on.
 4. Check `open-at` is `""` (or a past time) if you want the End open.
+5. Anyone already standing in the old shared End is moved out the next time they join.
 
 ### Requirements
 Paper 26.2 and the Java version it requires. No other plugins are needed.

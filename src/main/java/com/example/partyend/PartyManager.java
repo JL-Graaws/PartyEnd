@@ -20,6 +20,7 @@ package com.example.partyend;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -36,6 +37,20 @@ final class PartyManager {
     private final Map<UUID, UUID> hostOfMember = new HashMap<>();   // member -> host (host maps to itself)
     private final Map<UUID, Set<UUID>> members = new HashMap<>();   // host -> members incl. host
     private final Map<UUID, Invite> invites = new HashMap<>();      // target -> invite
+
+    private final DataStore data;
+
+    PartyManager(DataStore data) {
+        this.data = data;
+        for (Map.Entry<UUID, List<UUID>> e : data.loadParties().entrySet()) {
+            if (e.getValue().size() < 2) continue;
+            Set<UUID> set = new LinkedHashSet<>(e.getValue());
+            members.put(e.getKey(), set);
+            for (UUID m : set) hostOfMember.put(m, e.getKey());
+        }
+    }
+
+    private void persist() { data.saveParties(members); }
 
     UUID hostOf(UUID id) { return hostOfMember.getOrDefault(id, id); }
 
@@ -72,6 +87,7 @@ final class PartyManager {
         hostOfMember.put(host, host);
         set.add(target);
         hostOfMember.put(target, host);
+        persist();
         return null;
     }
 
@@ -84,6 +100,7 @@ final class PartyManager {
         set.remove(id);
         hostOfMember.remove(id);
         if (set.size() <= 1) disband(host);
+        persist();
         return Set.of(id);
     }
 
@@ -99,6 +116,7 @@ final class PartyManager {
         Set<UUID> s = members.remove(host);
         if (s == null) return Set.of();
         s.forEach(hostOfMember::remove);
+        persist();
         return s;
     }
 }

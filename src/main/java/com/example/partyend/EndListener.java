@@ -21,16 +21,22 @@ package com.example.partyend;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.EnderDragon;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityPortalEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerPortalEvent;
+import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 final class EndListener implements Listener {
@@ -38,6 +44,7 @@ final class EndListener implements Listener {
     private final DataStore data;
     private final PartyManager parties;
     private final InstanceManager instances;
+    private final Map<UUID, Long> lastNotice = new HashMap<>();
 
     EndListener(PartyEndPlugin plugin, DataStore data, PartyManager parties, InstanceManager instances) {
         this.plugin = plugin;
@@ -48,16 +55,39 @@ final class EndListener implements Listener {
 
     private boolean gateOpen(Player p) {
         if (p.hasPermission("partyend.bypass")) return true;
-        String s = plugin.getConfig().getString("open-at", "");
-        if (s == null || s.isBlank()) return true;
-        try {
-            return Instant.now().isAfter(Instant.parse(s));
-        } catch (Exception e) {
-            plugin.getLogger().warning("Invalid open-at value '" + s + "'; keeping the End closed.");
+        if (!OpenGate.isOpen(plugin.getConfig())) {
+            String why = OpenGate.describe(plugin.getConfig());
+            if (why.startsWith("INVALID")) plugin.getLogger().warning(why);
             return false;
         }
+        return true;
     }
 
+    /** Sends a message at most once every 3 seconds per player (portals can fire every tick). */
+    private void notice(Player p, String msg) {
+        long now = System.currentTimeMillis();
+        Long last = lastNotice.get(p.getUniqueId());
+        if (last != null && now - last < 3000) return;
+        lastNotice.put(p.getUniqueId(), now);
+        p.sendMessage(msg);
+    }
+
+    /** The shared entry flow: gate check, then send the player to their host's End. */
+    private void enterEnd(Player p) {
+        if (!gateOpen(p)) {
+            notice(p, "The End hasn't opened yet. Keep an eye on announcements!");
+            return;
+        }
+        UUID host = parties.hostOf(p.getUniqueId());
+        World w = instances.getOrCreate(host);
+        if (w == null) {
+            notice(p, "The End is busy right now. Please try again in a moment.");
+            return;
+        }
+        p.teleportAsync(instances.entryLocation(w));
+    }
+
+    /** A player walking into an End portal. */
     @EventHandler(ignoreCancelled = true)
     public void onPortal(PlayerPortalEvent e) {
         if (e.getCause() != TeleportCause.END_PORTAL) return;
@@ -75,17 +105,62 @@ final class EndListener implements Listener {
         if (to == null || to.getEnvironment() != World.Environment.THE_END) return;
 
         e.setCancelled(true);
-        if (!gateOpen(p)) {
-            p.sendMessage("The End hasn't opened yet. Keep an eye on announcements!");
-            return;
+        enterEnd(p);
+    }
+
+    /**
+     * A vehicle (boat, minecart, rideable mob) or any other entity entering an End portal. Riders do NOT
+     * trigger PlayerPortalEvent; the vehicle triggers this instead and carries them along, which used to
+     * bypass the gate and the instances. Cancel it for everything, and send any riders through the normal flow.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityPortal(EntityPortalEvent e) {
+        Location to = e.getTo();
+        if (to == null || to.getWorld() == null || to.getWorld().getEnvironment() != World.Environment.THE_END) return;
+        if (instances.isInstance(e.getFrom().getWorld())) return;
+
+        e.setCancelled(true);
+        List<Player> riders = new ArrayList<>();
+        collectRiders(e.getEntity(), riders);
+        if (riders.isEmpty()) return;
+        plugin.getServer().getScheduler().runTask(plugin, () -> {
+            for (Player p : riders) {
+                if (!p.isOnline()) continue;
+                p.leaveVehicle();
+                enterEnd(p);
+            }
+        });
+    }
+
+    private void collectRiders(Entity vehicle, List<Player> out) {
+        for (Entity passenger : vehicle.getPassengers()) {
+            if (passenger instanceof Player p) out.add(p);
+            collectRiders(passenger, out);
         }
-        UUID host = parties.hostOf(p.getUniqueId());
-        World w = instances.getOrCreate(host);
-        if (w == null) {
-            p.sendMessage("The End is busy right now. Please try again in a moment.");
-            return;
+    }
+
+    /**
+     * Commands and plugins (/tp, /tpa, ...). Nobody but admins may teleport into someone else's End, or
+     * into the old shared End. Walking through a portal is handled above.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onTeleport(PlayerTeleportEvent e) {
+        Location to = e.getTo();
+        if (to == null || to.getWorld() == null) return;
+        Player p = e.getPlayer();
+        if (p.hasPermission("partyend.admin")) return;
+
+        World w = to.getWorld();
+        if (instances.isInstance(w)) {
+            UUID host = instances.hostOfWorld(w);
+            if (host != null && !parties.membersOf(host).contains(p.getUniqueId())) {
+                e.setCancelled(true);
+                notice(p, "That End belongs to another party.");
+            }
+        } else if (w.getEnvironment() == World.Environment.THE_END) {
+            e.setCancelled(true);
+            notice(p, "That End isn't available. Use an End portal to reach your own.");
         }
-        p.teleportAsync(instances.entryLocation(w));
     }
 
     /** Remember which instance a player is in, so a server restart can put them back. */
@@ -103,7 +178,7 @@ final class EndListener implements Listener {
         }
     }
 
-    /** Mark everyone in the instance as cleared. Stored per player, so resets never bring the fight back. */
+    /** Mark the host's party members in the instance as cleared. Stored per player, so resets never bring the fight back. */
     @EventHandler
     public void onDragonDeath(EntityDeathEvent e) {
         if (!(e.getEntity() instanceof EnderDragon)) return;
@@ -120,6 +195,14 @@ final class EndListener implements Listener {
         UUID id = p.getUniqueId();
         UUID saved = data.inInstance(id);
 
+        // Anyone who got into the old shared End (for example before this fix) is moved out.
+        World cur = p.getWorld();
+        if (cur.getEnvironment() == World.Environment.THE_END && !instances.isInstance(cur)
+                && !p.hasPermission("partyend.admin")) {
+            p.teleportAsync(instances.exitLocation(p));
+            p.sendMessage("That End isn't available, so you were moved out. Use an End portal to reach your own.");
+        }
+
         // After a restart the instance isn't loaded, so the server dropped them into the overworld.
         if (saved != null && !instances.isInstance(p.getWorld())) {
             if (saved.equals(parties.hostOf(id))) {
@@ -133,10 +216,10 @@ final class EndListener implements Listener {
                     p.sendMessage("The End is busy right now, so you were moved to safety.");
                 }
             } else {
-                // Parties reset on restart, so they no longer belong to that host's End.
+                // The player no longer belongs to that host's End.
                 data.clearInInstance(id);
                 p.teleportAsync(instances.exitLocation(p));
-                p.sendMessage("Your party was reset by the restart, so you were moved out of that End.");
+                p.sendMessage("You're no longer part of that End, so you were moved out.");
             }
         }
 

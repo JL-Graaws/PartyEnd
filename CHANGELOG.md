@@ -9,11 +9,16 @@ All notable changes to PartyEnd are recorded here. The format follows [Keep a Ch
 - Parties are saved to `data.yml`, so they survive restarts.
 - Dragon health scales with the size of the host's party when the dragon first appears (`dragon-health-per-extra-member` and `dragon-max-health-multiplier` in the config).
 
+### Fixed
+- Players riding a boat, minecart or other vehicle could enter an End portal without triggering the plugin, bypassing the opening date and the instances and landing in the old shared End. Vehicles are now intercepted, and riders go through the normal entry flow.
+
 ### Changed
+- Only the host's party members can teleport into an instance (`/tp`, `/tpa` and similar); `partyend.admin` bypasses this. The old shared End is closed to non-admins, and anyone found in it on join is moved out.
+- Killing the dragon only marks the host's party members as cleared. Other players who happen to be in the End are no longer credited.
 - `open-at` now accepts words like `empty`, `none` and `now` as "open", accepts an unquoted time, and logs a clearer error for anything else.
 
 ### Upgrading from 0.1.1
-Replace the jar and restart. Parties from before the restart are lost one last time, because earlier versions never saved them. New config options (`dragon-health-per-extra-member`, `dragon-max-health-multiplier`) are optional: if they are missing from your `config.yml`, the defaults are used. Set `open-at: ""` if you want the End open.
+Replace the jar and restart. Parties from before the restart are lost one last time, because earlier versions never saved them. New config options (`dragon-health-per-extra-member`, `dragon-max-health-multiplier`) are optional: if they are missing from your `config.yml`, the defaults are used. Set `open-at: ""` if you want the End open. Anyone already standing in the old shared End is moved out the next time they join.
 
 ## [0.1.1] - 2026-10-26
 

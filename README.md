@@ -14,6 +14,7 @@ Built for Paper 26.2 with Geyser/Floodgate (Bedrock) servers in mind.
 - **"Cleared" is stored per player,** not per world, so resetting or deleting an End never brings the fight back for someone who has done it.
 - **Delayed opening.** Set a date before which nobody (except players with the bypass permission) can enter.
 - **Automatic cleanup.** Empty Ends unload straight away. Ends are deleted after a period of inactivity, with a login warning beforehand.
+- **Closed to outsiders.** Only a host's party members can teleport into that host's End, including with `/tp`. Boats, minecarts and other vehicles are handled like players walking through the portal. The dragon kill only credits the host's party.
 - **Restart-safe.** Players who were in an End when the server restarted are put back into it on join.
 - **Bedrock friendly.** Everything is keyed by UUID, so Floodgate players work with no extra setup.
 
@@ -53,7 +54,7 @@ Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
 | Permission | Default | Description |
 |---|---|---|
 | `partyend.bypass` | op | Enter the End before the `open-at` date. |
-| `partyend.admin` | op | Use `/endparty reload`. |
+| `partyend.admin` | op | Use `/endparty reload`, and teleport into other players' Ends or the old shared End. |
 
 ## Configuration
 

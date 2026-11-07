@@ -22,11 +22,16 @@ import org.bukkit.Bukkit;
 import org.bukkit.Difficulty;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.World;
 import org.bukkit.WorldCreator;
 import org.bukkit.entity.EnderDragon;
 import org.bukkit.entity.Player;
 import org.bukkit.boss.DragonBattle;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,11 +49,13 @@ final class InstanceManager {
     private final PartyEndPlugin plugin;
     private final DataStore data;
     private final PartyManager parties;
+    private final NamespacedKey scaledKey;
 
     InstanceManager(PartyEndPlugin plugin, DataStore data, PartyManager parties) {
         this.plugin = plugin;
         this.data = data;
         this.parties = parties;
+        this.scaledKey = new NamespacedKey(plugin, "dragon_scaled");
     }
 
     String worldName(UUID host) { return PREFIX + host; }
@@ -179,13 +186,15 @@ final class InstanceManager {
         catch (IllegalArgumentException e) { return null; }
     }
 
-    /** Marks everyone currently in the instance as having beaten the dragon. */
+    /** Marks the host's party members who are in the instance as having beaten the dragon. Outsiders are not credited. */
     void markCleared(World w) {
+        UUID host = hostOfWorld(w);
+        java.util.Set<UUID> party = host == null ? java.util.Set.of() : parties.membersOf(host);
         for (Player p : w.getPlayers()) {
+            if (!party.contains(p.getUniqueId())) continue;
             data.setCleared(p.getUniqueId());
             p.sendMessage("You've defeated the Ender Dragon!");
         }
-        UUID host = hostOfWorld(w);
         if (host != null) data.setNoFight(host);
     }
 
@@ -213,6 +222,8 @@ final class InstanceManager {
                 if (killed) data.clearSuppress(host); // later dragons (end crystals) are left alone
                 continue;
             }
+
+            scaleDragons(w, host);
 
             if (data.noFight(host)) continue;
             DragonBattle battle = w.getEnderDragonBattle();

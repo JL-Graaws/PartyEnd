@@ -29,11 +29,13 @@ import java.util.Set;
 import java.util.UUID;
 
 final class PartyCommand implements TabExecutor {
+    private final PartyEndPlugin plugin;
     private final PartyManager parties;
     private final InstanceManager instances;
     private final DataStore data;
 
-    PartyCommand(PartyManager parties, InstanceManager instances, DataStore data) {
+    PartyCommand(PartyEndPlugin plugin, PartyManager parties, InstanceManager instances, DataStore data) {
+        this.plugin = plugin;
         this.parties = parties;
         this.instances = instances;
         this.data = data;
@@ -41,6 +43,12 @@ final class PartyCommand implements TabExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (args.length > 0 && args[0].equalsIgnoreCase("reload")) {
+            if (!sender.hasPermission("partyend.admin")) { sender.sendMessage("You don't have permission."); return true; }
+            plugin.reloadConfig();
+            sender.sendMessage("PartyEnd config reloaded. The End is: " + OpenGate.describe(plugin.getConfig()));
+            return true;
+        }
         if (!(sender instanceof Player p)) { sender.sendMessage("Players only."); return true; }
         if (args.length == 0) { p.sendMessage("Usage: /endparty <invite|accept|leave|kick|info|exit> [player]"); return true; }
         UUID me = p.getUniqueId();
@@ -106,7 +114,11 @@ final class PartyCommand implements TabExecutor {
 
     @Override
     public List<String> onTabComplete(CommandSender s, Command c, String l, String[] a) {
-        if (a.length == 1) return List.of("invite", "accept", "leave", "kick", "info", "exit");
+        if (a.length == 1) {
+            return s.hasPermission("partyend.admin")
+                    ? List.of("invite", "accept", "leave", "kick", "info", "exit", "reload")
+                    : List.of("invite", "accept", "leave", "kick", "info", "exit");
+        }
         if (a.length == 2 && (a[0].equalsIgnoreCase("invite") || a[0].equalsIgnoreCase("kick")))
             return Bukkit.getOnlinePlayers().stream().map(Player::getName).toList();
         return List.of();

@@ -27,12 +27,12 @@ public final class PartyEndPlugin extends JavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         DataStore data = new DataStore(this);
-        PartyManager parties = new PartyManager();
+        PartyManager parties = new PartyManager(data);
         InstanceManager instances = new InstanceManager(this, data, parties);
 
         getServer().getPluginManager().registerEvents(new EndListener(this, data, parties, instances), this);
 
-        PartyCommand cmd = new PartyCommand(parties, instances, data);
+        PartyCommand cmd = new PartyCommand(this, parties, instances, data);
         PluginCommand pc = getCommand("endparty");
         if (pc != null) {
             pc.setExecutor(cmd);

@@ -1,4 +1,5 @@
-# ISO-8601 instant, e.g. 2026-11-01T18:00:00Z. Empty = End is open now.
+# UTC time the End opens, e.g. "2026-11-01T18:00:00Z" (keep the quotes).
+# Leave it as "" (or none/now) to open the End immediately.
 open-at: ""
 
 # Seed used for NEW instances only. Existing instances keep the seed they were made with.
@@ -16,6 +17,12 @@ warn-days: 3
 
 # Difficulty of each End: inherit (copy the main overworld), peaceful, easy, normal or hard
 difficulty: inherit
+
+# Dragon health scaling by party size. Max health is multiplied by
+#   1 + dragon-health-per-extra-member * (partySize - 1), up to dragon-max-health-multiplier.
+# The size is read when the dragon first appears. Set the per-member value to 0 to turn scaling off.
+dragon-health-per-extra-member: 0.5
+dragon-max-health-multiplier: 5.0
 
 # Cap on simultaneously loaded instances (world creation is main-thread work)
 max-loaded-instances: 10

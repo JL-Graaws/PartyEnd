@@ -1,6 +1,6 @@
 name: PartyEnd
 main: com.example.partyend.PartyEndPlugin
-version: 0.1.1
+version: 0.2.0
 api-version: '26.2'
 description: Per-party instanced End dimensions
 commands:
@@ -11,4 +11,7 @@ commands:
 permissions:
   partyend.bypass:
     description: Enter the End before the opening date
+    default: op
+  partyend.admin:
+    description: Reload the config, and enter any End or teleport into other players' Ends
     default: op
