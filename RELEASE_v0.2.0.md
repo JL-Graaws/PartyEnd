@@ -31,6 +31,6 @@ Paper 26.2 and the Java version it requires. No other plugins are needed.
 - Dragon health scaling and a few paths (exit portal, post-restart restore, gateway placement) have had limited testing.
 - A new jar still needs a server restart; only config changes can be reloaded.
 
-Full details are in the [README](https://github.com/<your-username>/PartyEnd/blob/main/README.md) and [CHANGELOG](https://github.com/<your-username>/PartyEnd/blob/main/CHANGELOG.md).
+Full details are in the [README](https://github.com/JL-Graaws/PartyEnd/blob/main/README.md) and [CHANGELOG](https://github.com/JL-Graaws/PartyEnd/blob/main/CHANGELOG.md).
 
 Licensed under GPL-3.0-or-later.
