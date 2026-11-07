@@ -199,6 +199,29 @@ final class InstanceManager {
     }
 
     /**
+     * Scales each new dragon's max health by the host's party size, once, when the dragon is first seen.
+     * multiplier = 1 + per-extra-member * (partySize - 1), capped. The dragon is tagged so it is never rescaled.
+     */
+    private void scaleDragons(World w, UUID host) {
+        double per = plugin.getConfig().getDouble("dragon-health-per-extra-member", 0.5);
+        if (per <= 0) return;
+        double cap = Math.max(1.0, plugin.getConfig().getDouble("dragon-max-health-multiplier", 5.0));
+        int size = parties.membersOf(host).size();
+        double mult = Math.min(cap, 1 + per * (size - 1));
+
+        for (EnderDragon d : w.getEntitiesByClass(EnderDragon.class)) {
+            PersistentDataContainer pdc = d.getPersistentDataContainer();
+            if (d.getHealth() <= 0 || pdc.has(scaledKey, PersistentDataType.BYTE)) continue;
+            AttributeInstance max = d.getAttribute(Attribute.MAX_HEALTH);
+            if (max != null && mult > 1) {
+                max.setBaseValue(max.getBaseValue() * mult);
+                d.setHealth(max.getBaseValue());
+            }
+            pdc.set(scaledKey, PersistentDataType.BYTE, (byte) 1);
+        }
+    }
+
+    /**
      * Scheduled task. The death event is skipped when a dragon is removed with /kill, so also watch the
      * battle's "previously killed" flag, which is set either way.
      */
