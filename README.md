@@ -43,6 +43,7 @@ Avoid `/reload`; restart the server instead.
 | `/endparty leave` | Leave your party. If the host leaves, the party disbands. |
 | `/endparty kick <player>` | Host only. Remove a member. |
 | `/endparty info` | Show the host and members, and whether each has cleared the dragon. |
+| `/endparty reload` | Admin only. Re-read `config.yml` without a restart and report whether the End is open. |
 | `/endparty exit` | Move yourself out of an End instance to your respawn point. |
 
 Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
@@ -52,6 +53,7 @@ Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
 | Permission | Default | Description |
 |---|---|---|
 | `partyend.bypass` | op | Enter the End before the `open-at` date. |
+| `partyend.admin` | op | Use `/endparty reload`. |
 
 ## Configuration
 
@@ -59,13 +61,15 @@ Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
 
 | Key | Default | Description |
 |---|---|---|
-| `open-at` | `""` | ISO-8601 time the End opens, for example `2026-11-01T18:00:00Z`. Empty means open now. An invalid value keeps the End closed. |
+| `open-at` | `""` | UTC time the End opens, for example `"2026-11-01T18:00:00Z"`. Empty (or `none`/`now`) means open now. An invalid value keeps the End closed and logs a warning. |
 | `seed` | `20261015` | Seed for new Ends only. Existing Ends keep theirs. |
 | `border-radius` | `1500` | World border radius per End. Keep it above about 1300 so outer-island gateways stay inside the border. |
 | `retention-days` | `14` | Days of inactivity before an End is deleted. |
 | `cleared-retention-days` | `7` | Same, once every member of the host's party has cleared. |
 | `warn-days` | `3` | Warn players on login when their End will be deleted within this many days. |
 | `difficulty` | `inherit` | Difficulty of each End: `inherit` copies the main overworld, or set `peaceful`, `easy`, `normal` or `hard`. |
+| `dragon-health-per-extra-member` | `0.5` | Dragon max health is multiplied by `1 + this * (partySize - 1)`. `0` turns scaling off. |
+| `dragon-max-health-multiplier` | `5.0` | Upper limit on that multiplier. |
 | `max-loaded-instances` | `10` | Cap on Ends loaded at once. World creation is main-thread work. |
 
 ## How it works
@@ -74,7 +78,7 @@ Bedrock players are typed with their Floodgate prefix (for example `.Graaws`).
 - The host's cleared status is read **once, when an End is created**. A player who clears the dragon later does not change Ends that already exist.
 - For a dragonless End, the plugin builds the exit portal and one gateway straight away, then removes the first dragon the game spawns (if any) through the normal death path so the fight finishes cleanly. That cleanup kill never counts as a clear for anyone.
 - Dragon kills are detected both from the death event and by watching the battle's state, so `/kill` and normal fights are both recorded.
-- Data lives in `plugins/PartyEnd/data.yml`: which Ends exist, who has cleared, and where players last stood.
+- Data lives in `plugins/PartyEnd/data.yml`: which Ends exist, who has cleared, parties, and where players last stood.
 
 ## Resetting for testing
 
@@ -87,7 +91,6 @@ Delete the folders and the data together. Deleting only one leaves the plugin an
 
 ## Known limitations
 
-- **Parties are in memory only.** A restart disbands them; players fall back to their own End.
 - **Existing Ends are never re-checked.** If a player's own End was created while they were uncleared, it keeps its dragon even after they clear elsewhere, until it expires or is deleted.
 - **The dragon-cleanup relies on the game's own timer.** The game decides when a dragon spawns, which can be about a minute after arrival. The plugin cannot shorten that.
 - **Untested on some paths.** Leaving through the exit portal, restoring players after a restart and the gateway placement have had limited testing. Report anything odd.

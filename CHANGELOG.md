@@ -2,6 +2,16 @@
 
 All notable changes to PartyEnd are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- `/endparty reload` (permission `partyend.admin`) re-reads the config and reports whether the End is open.
+- Parties are saved to `data.yml`, so they survive restarts.
+- Dragon health scales with the size of the host's party when the dragon first appears (`dragon-health-per-extra-member` and `dragon-max-health-multiplier` in the config).
+
+### Changed
+- `open-at` now accepts words like `empty`, `none` and `now` as "open", accepts an unquoted time, and logs a clearer error for anything else.
+
 ## [0.1.1] - 2026-10-26
 
 ### Added
