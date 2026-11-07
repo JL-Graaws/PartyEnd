@@ -2,7 +2,7 @@
 
 All notable changes to PartyEnd are recorded here. The format follows [Keep a Changelog](https://keepachangelog.com/), and the project uses [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.2.0] - 2026-11-07
 
 ### Added
 - `/endparty reload` (permission `partyend.admin`) re-reads the config and reports whether the End is open.
@@ -11,6 +11,9 @@ All notable changes to PartyEnd are recorded here. The format follows [Keep a Ch
 
 ### Changed
 - `open-at` now accepts words like `empty`, `none` and `now` as "open", accepts an unquoted time, and logs a clearer error for anything else.
+
+### Upgrading from 0.1.1
+Replace the jar and restart. Parties from before the restart are lost one last time, because earlier versions never saved them. New config options (`dragon-health-per-extra-member`, `dragon-max-health-multiplier`) are optional: if they are missing from your `config.yml`, the defaults are used. Set `open-at: ""` if you want the End open.
 
 ## [0.1.1] - 2026-10-26
 
@@ -49,5 +52,6 @@ First public release. Early and lightly tested; try it on a copy of your server 
 - Leaving through the exit portal, post-restart restoring and gateway placement have had limited testing.
 - Paper 26.2 only; built against `paper-api:26.2.build.121-stable`.
 
+[0.2.0]: https://github.com/OWNER/REPO/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/OWNER/REPO/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/OWNER/REPO/releases/tag/v0.1.0
